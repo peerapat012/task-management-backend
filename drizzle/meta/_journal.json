@@ -8,6 +8,20 @@
       "when": 1771947230451,
       "tag": "0000_closed_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771949880165,
+      "tag": "0001_powerful_jimmy_woo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771950263978,
+      "tag": "0002_fresh_firebrand",
+      "breakpoints": true
     }
   ]
 }
