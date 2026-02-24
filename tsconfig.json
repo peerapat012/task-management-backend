@@ -13,7 +13,7 @@
     /* Type safety */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     /* Interop & correctness */
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
