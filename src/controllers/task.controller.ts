@@ -95,7 +95,7 @@ export const createTask = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
-        const { title, description, status } = req.body;
+        const { title, description, status, priority } = req.body;
         const userId = req.user!.id;
 
         if (!title) {
@@ -109,6 +109,7 @@ export const createTask = async (req: AuthRequest,
                 title,
                 description,
                 status: status || 'pending',
+                priority: priority || 'medium',
                 userId
             })
             .returning({ ...getTableColumns(tasks) });
@@ -133,7 +134,7 @@ export const updateTask = async (req: AuthRequest,
             return;
         }
 
-        const { title, description, status } = req.body;
+        const { title, description, status, priority } = req.body;
 
         const [updatedTask] = await db
             .update(tasks)
@@ -141,6 +142,7 @@ export const updateTask = async (req: AuthRequest,
                 ...(title && { title }),
                 ...(description !== undefined && { description }),
                 ...(status && { status }),
+                ...(priority && { priority }),
                 updatedAt: new Date()
             })
             .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))

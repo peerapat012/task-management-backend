@@ -2,6 +2,7 @@ import { boolean, integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/
 import { relations } from "drizzle-orm";
 
 export const statusEnum = pgEnum('status', ['pending', 'in_progress', 'completed']);
+export const priorityEnum = pgEnum('priority', ['high', 'medium', 'low']);
 export const usersRoleEnum = pgEnum('role', ['user', 'admin']);
 
 export const users = pgTable('users', {
@@ -24,6 +25,7 @@ export const tasks = pgTable('tasks', {
     title: text('title').notNull(),
     description: text('description'),
     status: statusEnum('status').notNull().default('pending'),
+    priority: priorityEnum('priority').notNull().default('low'),
     isDeleted: boolean('is_deleted').notNull().default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
