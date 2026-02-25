@@ -8,7 +8,7 @@ export interface AuthRequest extends Request {
     user?: typeof users.$inferSelect;
 }
 
-const authorize = async (req: AuthRequest,
+export const authorize = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
@@ -41,4 +41,12 @@ const authorize = async (req: AuthRequest,
     }
 }
 
-export default authorize;
+export const authorizeRole = (role: string) => {
+    return (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (req.user?.role !== role) {
+            res.status(403).json({ message: "Forbidden", error: "Insufficient permissions" });
+            return;
+        }
+        next();
+    }
+}
