@@ -2,19 +2,21 @@ import { and, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { tasks } from "../db/schema/app";
 import { db } from "../db";
 import { NextFunction, Request, Response } from "express";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
-export const getAllTasks = async (req: Request,
+export const getAllTasks = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
         const { search, title, page = 1, limit = 10 } = req.query;
+        const userId = req.user!.id;
 
         const currentPage = Math.max(1, +page);
         const limitPerPage = Math.max(1, +limit);
 
         const offset = (currentPage - 1) * limitPerPage;
 
-        const filterConditions = [];
+        const filterConditions: any[] = [eq(tasks.userId, userId), eq(tasks.isDeleted, false)];
 
         if (search) {
             filterConditions.push(
@@ -29,7 +31,7 @@ export const getAllTasks = async (req: Request,
             filterConditions.push(ilike(tasks.title, `%${title}%`));
         }
 
-        const whereClause = filterConditions.length > 0 ? and(...filterConditions) : undefined;
+        const whereClause = and(...filterConditions);
 
         const countResult = await db
             .select({ count: sql<number>`count(*)` })
@@ -58,12 +60,13 @@ export const getAllTasks = async (req: Request,
     }
 }
 
-export const getTaskById = async (req: Request,
+export const getTaskById = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
         const { id } = req.params;
         const taskId = +id!;
+        const userId = req.user!.id;
 
         if (isNaN(taskId)) {
             res.status(400).json({ message: "Invalid task ID" });
@@ -73,7 +76,7 @@ export const getTaskById = async (req: Request,
         const task = await db
             .select({ ...getTableColumns(tasks) })
             .from(tasks)
-            .where(eq(tasks.id, taskId))
+            .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId), eq(tasks.isDeleted, false)))
             .limit(1);
 
         if (task.length === 0) {
@@ -88,14 +91,15 @@ export const getTaskById = async (req: Request,
     }
 }
 
-export const createTask = async (req: Request,
+export const createTask = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
-        const { title, description, status, userId } = req.body;
+        const { title, description, status } = req.body;
+        const userId = req.user!.id;
 
-        if (!title || !userId) {
-            res.status(400).json({ message: "Title and userId are required" });
+        if (!title) {
+            res.status(400).json({ message: "Title is required" });
             return;
         }
 
@@ -116,12 +120,13 @@ export const createTask = async (req: Request,
     }
 }
 
-export const updateTask = async (req: Request,
+export const updateTask = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
         const { id } = req.params;
         const taskId = +id!;
+        const userId = req.user!.id;
 
         if (isNaN(taskId)) {
             res.status(400).json({ message: "Invalid task ID" });
@@ -138,7 +143,7 @@ export const updateTask = async (req: Request,
                 ...(status && { status }),
                 updatedAt: new Date()
             })
-            .where(eq(tasks.id, taskId))
+            .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
             .returning({ ...getTableColumns(tasks) });
 
         if (!updatedTask) {
@@ -153,12 +158,13 @@ export const updateTask = async (req: Request,
     }
 }
 
-export const deleteTask = async (req: Request,
+export const deleteTask = async (req: AuthRequest,
     res: Response,
     next: NextFunction) => {
     try {
         const { id } = req.params;
         const taskId = +id!;
+        const userId = req.user!.id;
 
         if (isNaN(taskId)) {
             res.status(400).json({ message: "Invalid task ID" });
@@ -166,8 +172,9 @@ export const deleteTask = async (req: Request,
         }
 
         const [deletedTask] = await db
-            .delete(tasks)
-            .where(eq(tasks.id, taskId))
+            .update(tasks)
+            .set({ isDeleted: true, updatedAt: new Date() })
+            .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
             .returning({ ...getTableColumns(tasks) });
 
         if (!deletedTask) {
