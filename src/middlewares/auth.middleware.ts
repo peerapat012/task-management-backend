@@ -16,6 +16,8 @@ const authorize = async (req: AuthRequest,
 
         if (req.header("Authorization") && req.header("Authorization")?.startsWith("Bearer")) {
             token = req.header("Authorization")?.split(" ")[1];
+        } else if (req.cookies?.token) {
+            token = req.cookies.token;
         }
 
         if (!token) {
